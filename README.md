@@ -98,11 +98,12 @@ No flags. Prints all template names and a one-line description of each.
 
 Apply a built-in template, parameterised to your table.
 
-Options:
-  `-u, --use <name>`          Template name (see: rls templates list)
-  `-t, --table <name>`        Replace YOUR_TABLE_NAME with this value
-  `--owner-column <col>`      Replace YOUR_OWNER_COLUMN with this value
-  `-o, --output <file>`       Write result to a file instead of stdout
+| Flag | Description |
+|------|-------------|
+| `-u, --use <name>` | Template name (see: `rls templates list`) |
+| `-t, --table <name>` | Replace `YOUR_TABLE_NAME` with this value |
+| `--owner-column <col>` | Replace `YOUR_OWNER_COLUMN` with this value |
+| `-o, --output <file>` | Write result to a file instead of stdout |
 
 ## Templates
 
@@ -126,7 +127,7 @@ export OPENAI_API_KEY=sk-...
 
 ```json
 {
-  "openai_api_key": "sk-..."
+  "openaiApiKey": "sk-..."
 }
 ```
 
