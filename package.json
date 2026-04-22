@@ -1,0 +1,34 @@
+{
+  "name": "supabase-rls-helper",
+  "version": "0.1.0",
+  "description": "Generate Supabase RLS policies from plain English",
+  "bin": { "rls": "./dist/index.js" },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^12.0.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "openai": "^4.47.1",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^8.2.10",
+    "@types/node": "^20.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "files": ["dist", "templates", "examples", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "keywords": ["supabase","rls","postgresql","cli","security","developer-tools"],
+  "license": "MIT",
+  "type": "commonjs",
+  "author": "Theo / IndieGoWeb Ltd"
+}
