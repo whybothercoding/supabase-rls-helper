@@ -39,7 +39,7 @@ export async function generateCommand(options: GenerateOptions): Promise<void> {
   const spinner = ora('Generating RLS policies...').start();
 
   try {
-    const raw = await generateRLSPolicies(resolvedTable!, resolvedDescription!, columns);
+    const raw = await generateRLSPolicies(resolvedTable!, resolvedDescription!, columns, options.model);
 
     if (!raw.trim()) {
       spinner.fail('No response from OpenAI');

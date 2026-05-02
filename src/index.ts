@@ -23,6 +23,7 @@ program
   .option('-d, --description <text>', 'Plain-English description of the access rules')
   .option('-c, --columns <list>', 'Comma-separated list of column names (optional context)')
   .option('-o, --output <file>', 'Write generated SQL to this file instead of stdout')
+  .option('-m, --model <name>', 'OpenAI model to use', 'gpt-4o-mini')
   .action(async (options) => {
     try {
       await generateCommand(options);
@@ -37,6 +38,7 @@ program
   .command('explain')
   .description('Explain what an existing RLS policy does in plain English')
   .option('-s, --sql <policy>', 'SQL policy string to explain (or omit to enter interactively)')
+  .option('-m, --model <name>', 'OpenAI model to use', 'gpt-4o-mini')
   .action(async (options) => {
     try {
       await explainCommand(options);

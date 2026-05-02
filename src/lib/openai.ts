@@ -1,19 +1,17 @@
 import OpenAI from 'openai';
 import { getApiKey } from './config';
 
-let _client: OpenAI | null = null;
+const DEFAULT_MODEL = 'gpt-4o-mini';
 
 async function getClient(): Promise<OpenAI> {
-  if (!_client) {
-    _client = new OpenAI({ apiKey: await getApiKey() });
-  }
-  return _client;
+  return new OpenAI({ apiKey: await getApiKey() });
 }
 
 export async function generateRLSPolicies(
   table: string,
   description: string,
-  columns?: string
+  columns?: string,
+  model = DEFAULT_MODEL
 ): Promise<string> {
   const client = await getClient();
 
@@ -24,7 +22,7 @@ export async function generateRLSPolicies(
   userPrompt += '\n\nGenerate complete RLS policies for this table.';
 
   const response = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model,
     temperature: 0.1,
     messages: [
       {
@@ -42,11 +40,11 @@ export async function generateRLSPolicies(
   return response.choices[0]?.message?.content ?? '';
 }
 
-export async function explainPolicy(sql: string): Promise<string> {
+export async function explainPolicy(sql: string, model = DEFAULT_MODEL): Promise<string> {
   const client = await getClient();
 
   const response = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model,
     temperature: 0.1,
     messages: [
       {

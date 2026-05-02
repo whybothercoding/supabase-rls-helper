@@ -3,10 +3,12 @@ export interface GenerateOptions {
   description?: string;
   output?: string;
   columns?: string;
+  model?: string;
 }
 
 export interface ExplainOptions {
   sql?: string;
+  model?: string;
 }
 
 export interface TemplateOptions {

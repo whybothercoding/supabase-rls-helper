@@ -27,14 +27,14 @@ export async function explainCommand(options: ExplainOptions): Promise<void> {
   const spinner = ora('Analysing policy...').start();
 
   try {
-    const explanation = await explainPolicy(sql!);
+    const explanation = await explainPolicy(sql!, options.model);
 
     if (!explanation.trim()) {
       spinner.fail('No response from OpenAI');
       process.exit(1);
     }
 
-    spinner.succeed('Done');
+    spinner.stop();
     console.log('\n' + explanation + '\n');
   } catch (err) {
     spinner.fail('Failed to explain policy');
