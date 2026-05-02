@@ -2,6 +2,7 @@
 
 > Generate Supabase Row Level Security policies from plain-English descriptions.
 
+[![CI](https://github.com/whybothercoding/supabase-rls-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/whybothercoding/supabase-rls-helper/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm version](https://img.shields.io/npm/v/supabase-rls-helper.svg)](https://www.npmjs.com/package/supabase-rls-helper)
 
@@ -10,6 +11,7 @@
 - Describe your access rules in plain English → get production-ready SQL instantly
 - Explain any existing RLS policy back into plain English
 - Apply pre-built templates for the most common access patterns, parameterised to your table
+- Manage your OpenAI API key with a built-in `config` command
 
 ## Installation
 
@@ -63,12 +65,13 @@ rls generate --table posts --description "..." --output policies/posts.sql
 
 Generate RLS policies from a plain-English description.
 
-| Flag | Alias | Description | Required |
-|------|-------|-------------|----------|
-| `--table <name>` | `-t` | Target table name | Yes |
-| `--description <text>` | `-d` | Plain-English access rules | Yes |
-| `--columns <list>` | `-c` | Columns to provide as context to OpenAI | No |
-| `--output <file>` | `-o` | Save SQL to a file instead of stdout | No |
+| Flag | Alias | Description | Default |
+|------|-------|-------------|---------|
+| `--table <name>` | `-t` | Target table name | prompted |
+| `--description <text>` | `-d` | Plain-English access rules | prompted |
+| `--columns <list>` | `-c` | Columns to provide as context | — |
+| `--output <file>` | `-o` | Save SQL to a file instead of stdout | — |
+| `--model <name>` | `-m` | OpenAI model to use | `gpt-4o-mini` |
 
 ---
 
@@ -76,9 +79,10 @@ Generate RLS policies from a plain-English description.
 
 Explain an existing RLS policy in plain English.
 
-| Flag | Description |
-|------|-------------|
-| `-s, --sql <policy>` | SQL policy to explain (omit to enter interactively via $EDITOR) |
+| Flag | Alias | Description | Default |
+|------|-------|-------------|---------|
+| `--sql <policy>` | `-s` | SQL policy to explain | prompted |
+| `--model <name>` | `-m` | OpenAI model to use | `gpt-4o-mini` |
 
 ---
 
@@ -105,6 +109,18 @@ Apply a built-in template, parameterised to your table.
 | `--owner-column <col>` | Replace `YOUR_OWNER_COLUMN` with this value |
 | `-o, --output <file>` | Write result to a file instead of stdout |
 
+---
+
+### `rls config`
+
+Manage the stored OpenAI API key.
+
+```bash
+rls config show            # Print the active key source and masked value
+rls config set <key>       # Save a new key to ~/.rls-helper/config.json
+rls config clear           # Remove the stored key
+```
+
 ## Templates
 
 | Template | Description |
@@ -123,12 +139,12 @@ Apply a built-in template, parameterised to your table.
 export OPENAI_API_KEY=sk-...
 ```
 
-**Config file** — on first run, if no key is found, the CLI prompts you to enter one and saves it to `~/.rls-helper/config.json`. You can edit that file directly at any time:
+**Config file** — on first run, if no key is found, the CLI prompts you to enter one and saves it to `~/.rls-helper/config.json`. Manage it directly with `rls config`:
 
-```json
-{
-  "openaiApiKey": "sk-..."
-}
+```bash
+rls config show      # see what's stored
+rls config set sk-…  # update the key
+rls config clear     # remove it
 ```
 
 ## Examples
