@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import { generateCommand } from './commands/generate';
 import { explainCommand } from './commands/explain';
 import { listTemplates, useTemplate } from './commands/templates';
+import { configShowCommand, configSetCommand, configClearCommand } from './commands/config';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { version } = require('../package.json') as { version: string };
@@ -78,6 +79,32 @@ templates
       console.error(message);
       process.exit(1);
     }
+  });
+
+// ── config ────────────────────────────────────────────────────────────────────
+const config = program
+  .command('config')
+  .description('View or update the stored OpenAI API key');
+
+config
+  .command('show')
+  .description('Show the currently configured API key (masked)')
+  .action(() => {
+    configShowCommand();
+  });
+
+config
+  .command('set <key>')
+  .description('Save a new OpenAI API key to ~/.rls-helper/config.json')
+  .action((key: string) => {
+    configSetCommand(key);
+  });
+
+config
+  .command('clear')
+  .description('Remove the stored API key from ~/.rls-helper/config.json')
+  .action(() => {
+    configClearCommand();
   });
 
 program.parseAsync(process.argv).catch((err) => {
