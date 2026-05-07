@@ -33,14 +33,14 @@ npm run build && node dist/index.js generate --table posts --description "..."
 - `config.ts` — `configShowCommand`, `configSetCommand`, `configClearCommand` manage the API key stored at `~/.rls-helper/config.json`. Show masks the key as `sk-...XXXX`.
 
 **Lib layer** (`src/lib/`):
-- `config.ts` — API key resolution order: `OPENAI_API_KEY` env var → `~/.rls-helper/config.json` → interactive password prompt (saves on success).
+- `config.ts` — API key resolution order: `OPENAI_API_KEY` env var → `~/.rls-helper/config.json` → interactive password prompt (saves on success). Exports `CONFIG_FILE` and `CONFIG_DIR` constants (used by `commands/config.ts`).
 - `openai.ts` — thin wrapper around the OpenAI SDK; `generateRLSPolicies(table, description, columns?, model?)` and `explainPolicy(sql, model?)`. Default model is `gpt-4o-mini`, `temperature: 0.1`. A fresh `OpenAI` client is constructed per call (no module-level singleton).
 - `parser.ts` — `extractSQL` strips markdown fences from LLM output; `validateSQL` does lightweight structural checks (looks for `ENABLE ROW LEVEL SECURITY`, `CREATE POLICY`, and balanced parentheses). Both are pure functions covered by `src/lib/parser.test.ts`.
-- `highlight.ts` — keyword-based SQL syntax highlighting via chalk, printed directly to stdout.
+- `highlight.ts` — keyword-based SQL syntax highlighting via chalk, printed directly to stdout. Uses a single-pass regex (keywords sorted longest-first) to avoid ANSI sequence corruption from overlapping matches.
 
 **Templates** (`templates/*.sql`): Five static SQL files. `getTemplatesDir()` in `templates.ts` resolves as `__dirname/../../templates` — this correctly points to the project root `templates/` whether running from `dist/commands/` (built) or `src/commands/` (ts-node).
 
-**Types** (`src/types/index.ts`): Shared interfaces — `GenerateOptions`, `ExplainOptions`, `TemplateOptions`, `RLSPolicy`, `Config`. `GenerateOptions` and `ExplainOptions` both include an optional `model` field.
+**Types** (`src/types/index.ts`): Shared interfaces — `GenerateOptions`, `ExplainOptions`, `TemplateOptions`, `Config`. `GenerateOptions` and `ExplainOptions` both include an optional `model` field.
 
 ## Key constraints
 
