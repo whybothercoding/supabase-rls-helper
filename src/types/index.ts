@@ -18,14 +18,6 @@ export interface TemplateOptions {
   output?: string;
 }
 
-export interface RLSPolicy {
-  name: string;
-  operation: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'ALL';
-  using?: string;
-  withCheck?: string;
-  description: string;
-}
-
 export interface Config {
   openaiApiKey: string;
 }

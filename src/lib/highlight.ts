@@ -8,9 +8,10 @@ const SQL_KEYWORDS = [
 ];
 
 export function highlightSQL(sql: string): void {
-  let result = sql;
-  for (const kw of SQL_KEYWORDS) {
-    result = result.split(kw).join(chalk.blue(kw));
-  }
-  console.log(result);
+  const sorted = [...SQL_KEYWORDS].sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(
+    sorted.map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+    'g'
+  );
+  console.log(sql.replace(pattern, (match) => chalk.blue(match)));
 }

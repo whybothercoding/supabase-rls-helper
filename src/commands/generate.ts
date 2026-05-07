@@ -12,6 +12,13 @@ export async function generateCommand(options: GenerateOptions): Promise<void> {
   let resolvedDescription = options.description;
   const { columns, output } = options;
 
+  if (!resolvedTable || !resolvedDescription) {
+    if (!process.stdout.isTTY) {
+      console.error(chalk.red('Error: --table and --description flags are required in non-interactive environments'));
+      process.exit(1);
+    }
+  }
+
   if (!resolvedTable) {
     const answers = await inquirer.prompt([
       {

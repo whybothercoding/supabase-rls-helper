@@ -4,8 +4,8 @@ import * as os from 'os';
 import inquirer from 'inquirer';
 import { Config } from '../types';
 
-const CONFIG_DIR = path.join(os.homedir(), '.rls-helper');
-const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
+export const CONFIG_DIR = path.join(os.homedir(), '.rls-helper');
+export const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 export function loadConfig(): Config | null {
   try {

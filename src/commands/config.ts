@@ -1,10 +1,6 @@
 import chalk from 'chalk';
 import * as fs from 'fs-extra';
-import * as path from 'path';
-import * as os from 'os';
-import { saveConfig, loadConfig } from '../lib/config';
-
-const CONFIG_FILE = path.join(os.homedir(), '.rls-helper', 'config.json');
+import { saveConfig, loadConfig, CONFIG_FILE } from '../lib/config';
 
 export function configShowCommand(): void {
   const envKey = process.env.OPENAI_API_KEY;
