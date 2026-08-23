@@ -2,10 +2,20 @@ import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
 import * as fs from 'fs-extra';
+import * as path from 'path';
 import { generateRLSPolicies } from '../lib/openai';
 import { extractSQL, validateSQL } from '../lib/parser';
 import { GenerateOptions } from '../types';
 import { highlightSQL } from '../lib/highlight';
+import { verifyPolicies } from '../lib/sandbox';
+import { printVerificationReport } from '../lib/verifyReport';
+import { emitRegressionTests } from '../lib/testEmitter';
+
+function deriveTestFilePath(outputPath: string): string {
+  const ext = path.extname(outputPath);
+  const base = ext ? outputPath.slice(0, -ext.length) : outputPath;
+  return `${base}.rls.test.sql`;
+}
 
 export async function generateCommand(options: GenerateOptions): Promise<void> {
   let resolvedTable = options.table;
@@ -72,6 +82,27 @@ export async function generateCommand(options: GenerateOptions): Promise<void> {
     } else {
       console.log('\n');
       highlightSQL(sql);
+    }
+
+    if (options.verify) {
+      const verifySpinner = ora('Verifying policies in a local sandbox...').start();
+      const report = await verifyPolicies(sql, resolvedTable!);
+      verifySpinner.stop();
+      printVerificationReport(report, false);
+    }
+
+    if (options.emitTests) {
+      const emitted = emitRegressionTests(sql, resolvedTable!);
+      if (!emitted.supported) {
+        console.log(chalk.yellow(`Skipped emitting regression tests: ${emitted.skipReason}\n`));
+      } else if (output) {
+        const testFile = deriveTestFilePath(output);
+        await fs.outputFile(testFile, emitted.sql!, 'utf-8');
+        console.log(chalk.green(`✓ Regression tests written to ${testFile}`));
+      } else {
+        console.log(chalk.dim('\n-- Regression tests --\n'));
+        console.log(emitted.sql);
+      }
     }
   } catch (err) {
     spinner.fail('Failed to generate policies');

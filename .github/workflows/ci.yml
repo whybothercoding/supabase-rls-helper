@@ -27,3 +27,9 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit the shipped templates (dogfooding rls audit)
+        run: node dist/index.js audit templates/

@@ -11,6 +11,9 @@
 - Describe your access rules in plain English → get production-ready SQL instantly
 - Explain any existing RLS policy back into plain English
 - Apply pre-built templates for the most common access patterns, parameterised to your table
+- **Audit** SQL files for common RLS gaps — no LLM involved, just a deterministic rule set built on documented Postgres RLS semantics (`rls audit`)
+- **Verify** generated policies for real — spins up an in-memory Postgres, applies the exact SQL, and runs two synthetic users plus an anonymous caller against it to prove isolation, not just assert it (`rls verify`, `--verify`)
+- **Emit** a portable regression-test SQL file you can run against your real Supabase project later (`--emit-tests`)
 - Manage your OpenAI API key with a built-in `config` command
 
 ## Installation
@@ -59,6 +62,28 @@ CREATE POLICY "Users can delete own posts"
 rls generate --table posts --description "..." --output policies/posts.sql
 ```
 
+## Beyond generation: audit and verify
+
+LLM output can be wrong. This tool doesn't just trust it — two independent layers check the SQL, neither of which needs an API key:
+
+**`rls audit`** is a deterministic static checker with zero LLM involvement. It parses SQL with a small hand-rolled tokenizer (not a regex hack — it correctly ignores semicolons and parens inside string/dollar-quoted literals) and flags real, Postgres-documented RLS footguns: policies defined with RLS never enabled, RLS enabled with zero policies (silently locks the table), a `FOR INSERT` policy that (invalidly) uses `USING` instead of `WITH CHECK`, and more. Every rule here is grounded in verified Postgres behavior, not assumption — see [`src/lib/audit.ts`](src/lib/audit.ts) for the reasoning behind each one, including a documented default-behavior correction that empirical testing (below) caught during development.
+
+```bash
+rls audit templates/                  # scan a directory recursively
+rls audit policies/posts.sql --json   # machine-readable output
+rls audit . --fail-on warning         # CI gate: exit non-zero on warning or worse
+```
+
+**`rls verify`** goes further: it actually runs the SQL. It boots [PGlite](https://pglite.dev) — Postgres compiled to WebAssembly, no Docker, no network, no external service — applies your exact policies to a real table, and executes SELECT/INSERT/UPDATE/DELETE as two synthetic users and an anonymous caller inside rolled-back transactions. It then checks the *actual rows returned* against who's supposed to see what, catching things static analysis can't — like two individually-reasonable policies that OR together into a leak. It's honest about its limits: policies that check access via a join/subquery against another table (team membership, admin role lookups) are structurally too complex for the automatic probe, and it says so rather than guessing.
+
+```bash
+rls generate --table posts --description "..." --verify        # generate, then prove it
+rls verify --file policies/posts.sql --table posts              # verify SQL you already have
+rls generate --table posts --description "..." --emit-tests -o policies/posts.sql
+# → also writes policies/posts.rls.test.sql: a portable, pgTAP-free regression
+#   test you can run against your real Supabase project with `psql -f`
+```
+
 ## Commands
 
 ### `rls generate`
@@ -72,6 +97,42 @@ Generate RLS policies from a plain-English description.
 | `--columns <list>` | `-c` | Columns to provide as context | — |
 | `--output <file>` | `-o` | Save SQL to a file instead of stdout | — |
 | `--model <name>` | `-m` | OpenAI model to use | `gpt-4o-mini` |
+| `--verify` | | Empirically test the generated policies in a local Postgres sandbox | off |
+| `--emit-tests` | | Write a portable regression-test SQL file alongside the output | off |
+
+---
+
+### `rls audit [paths...]`
+
+Scan SQL files or directories for common RLS gaps. No LLM, no network call — pure static analysis. Defaults to scanning the current directory recursively if no path is given.
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--json` | Output findings as JSON | off |
+| `--fail-on <level>` | Minimum severity that exits non-zero: `critical`, `warning`, or `info` | `critical` |
+
+Exit code is non-zero when a finding at or above `--fail-on` is present — drop it straight into CI. A ready-made composite GitHub Action wraps it: see [`.github/actions/rls-audit`](.github/actions/rls-audit/action.yml).
+
+```yaml
+- uses: whybothercoding/supabase-rls-helper/.github/actions/rls-audit@main
+  with:
+    path: supabase/migrations
+    fail-on: warning
+```
+
+---
+
+### `rls verify`
+
+Empirically test one table's RLS policies against an in-memory Postgres sandbox (PGlite) — two synthetic users plus an anonymous caller, checking real SELECT/INSERT/UPDATE/DELETE outcomes.
+
+| Flag | Alias | Description | Default |
+|------|-------|-------------|---------|
+| `--file <path>` | `-f` | SQL file containing the policies to verify | required |
+| `--table <name>` | `-t` | Table name to verify | required |
+| `--json` | | Output the verification report as JSON | off |
+
+Only supports policies that reference a single "owner" column directly on the target table (the common `user_id = auth.uid()` pattern) — join/subquery-based access control (team membership, admin role lookups) is out of scope and the tool says so explicitly rather than guessing.
 
 ---
 

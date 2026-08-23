@@ -5,6 +5,9 @@ import { generateCommand } from './commands/generate';
 import { explainCommand } from './commands/explain';
 import { listTemplates, useTemplate } from './commands/templates';
 import { configShowCommand, configSetCommand, configClearCommand } from './commands/config';
+import { auditCommand } from './commands/audit';
+import { verifyCommand } from './commands/verify';
+import { FindingSeverity } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { version } = require('../package.json') as { version: string };
@@ -24,6 +27,8 @@ program
   .option('-c, --columns <list>', 'Comma-separated list of column names (optional context)')
   .option('-o, --output <file>', 'Write generated SQL to this file instead of stdout')
   .option('-m, --model <name>', 'OpenAI model to use', 'gpt-4o-mini')
+  .option('--verify', 'Empirically test the generated policies in a local Postgres sandbox (PGlite)')
+  .option('--emit-tests', 'Write a portable, runnable regression-test SQL file alongside the output')
   .action(async (options) => {
     try {
       await generateCommand(options);
@@ -76,6 +81,45 @@ templates
   .action(async (options) => {
     try {
       await useTemplate(options);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      process.exit(1);
+    }
+  });
+
+// ── audit ─────────────────────────────────────────────────────────────────────
+program
+  .command('audit')
+  .description('Scan SQL files for common RLS gaps — RLS never enabled, no WITH CHECK on INSERT, etc.')
+  .argument('[paths...]', 'Files or directories to scan (defaults to the current directory)')
+  .option('--json', 'Output findings as JSON instead of a formatted report')
+  .option('--fail-on <level>', 'Minimum severity that exits non-zero: critical, warning, or info', 'critical')
+  .action(async (paths: string[], options: { json?: boolean; failOn: string }) => {
+    const validSeverities: FindingSeverity[] = ['critical', 'warning', 'info'];
+    if (!validSeverities.includes(options.failOn as FindingSeverity)) {
+      console.error(`Error: --fail-on must be one of ${validSeverities.join(', ')}`);
+      process.exit(1);
+    }
+    try {
+      await auditCommand({ paths, json: options.json, failOn: options.failOn as FindingSeverity });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      process.exit(1);
+    }
+  });
+
+// ── verify ────────────────────────────────────────────────────────────────────
+program
+  .command('verify')
+  .description('Empirically test RLS policies for one table in a local Postgres sandbox (PGlite)')
+  .option('-f, --file <path>', 'SQL file containing the policies to verify')
+  .option('-t, --table <name>', 'Table name to verify')
+  .option('--json', 'Output the verification report as JSON')
+  .action(async (options) => {
+    try {
+      await verifyCommand(options);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(message);

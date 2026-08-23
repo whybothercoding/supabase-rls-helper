@@ -1,0 +1,30 @@
+name: 'RLS Audit'
+description: 'Fail CI when Supabase RLS SQL has common gaps — RLS never enabled, no WITH CHECK on INSERT, etc.'
+author: 'IndieGoWeb Ltd'
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  path:
+    description: 'File or directory of SQL migrations to audit'
+    required: false
+    default: '.'
+  fail-on:
+    description: 'Minimum severity that fails the build: critical, warning, or info'
+    required: false
+    default: 'critical'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install supabase-rls-helper
+      shell: bash
+      run: npm install --no-save --global supabase-rls-helper
+
+    - name: Run rls audit
+      shell: bash
+      env:
+        RLS_AUDIT_PATH: ${{ inputs.path }}
+        RLS_AUDIT_FAIL_ON: ${{ inputs.fail-on }}
+      run: rls audit "$RLS_AUDIT_PATH" --fail-on "$RLS_AUDIT_FAIL_ON"
