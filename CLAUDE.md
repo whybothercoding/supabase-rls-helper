@@ -59,3 +59,8 @@ npm run build && node dist/index.js generate --table posts --description "..."
 - Template placeholder strings are `YOUR_TABLE_NAME` and `YOUR_OWNER_COLUMN` — any new template must use these exact strings to be compatible with `useTemplate`.
 - No paid external tools/services: `rls audit` and `rls verify` must never require an API key, a hosted database, or Docker. `verify`/`--verify`/`--emit-tests` depend only on `@electric-sql/pglite` (local, in-process, MIT-licensed).
 - Before changing anything in `audit.ts`'s rule set or `sandbox.ts`'s probe logic, verify the underlying Postgres RLS behavior empirically (a throwaway PGlite script) or against the official `CREATE POLICY` docs — don't rely on assumption. The rule set's own history (see `audit.ts`'s comment above `type Rule`) is a cautionary example of getting this wrong.
+
+## Open todos
+
+- [ ] **CI Node bump is committed but has never actually run.** `.github/workflows/ci.yml` moved `node-version: '22'` → `'24'` on 2026-09-06, for consistency with the portfolio-wide Node 24 baseline (this is a local CLI tool with no deployment, so there was no hard deadline behind it). Push a branch and confirm the workflow is still green — in particular that `@electric-sql/pglite`'s WASM Postgres still boots under Node 24, since `rls verify`/`--emit-tests` depend entirely on it and nothing else in CI exercises that path.
+- [ ] `actions/setup-node` is deliberately left at `@v7` here — it was already on the current latest when the rest of the portfolio was normalized to `@v6`. Don't "fix" it downward to match the others.
