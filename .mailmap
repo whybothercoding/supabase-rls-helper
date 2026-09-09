@@ -1,0 +1,6 @@
+# Maps a machine-generated .local commit author (never resolvable to a GitHub
+# account) onto the canonical identity, so `git log`/`git shortlog` display
+# correctly. Does not rewrite history and does not affect GitHub's own
+# contribution-graph attribution (that's controlled by verified account
+# emails, not this file).
+IndieGoWeb Ltd <contact@indiegoweb.com> <theo.dev@TheoDev.local>
